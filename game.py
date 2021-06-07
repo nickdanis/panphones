@@ -7,215 +7,120 @@ import re
 import json
 from ast import literal_eval
 
-# dev branch comment
-
-def to_ipa(cmu):
-    '''
-    convert CMU ARPABET to IPA
-    '''
-    arpa_dict = {'AY' : 'aɪ',
-			'D' : 'd',
-			'IY' : 'i',
-			'V' : 'v',
-			'AE' : 'æ',
-			'JH' : 'dʒ',
-			'UH' : 'ʊ',
-			'T' : 't',
-			'Y' : 'j',
-			'AH' : 'ʌ',
-			'G' : 'g',
-			'Z' : 'z',
-			'P' : 'p',
-			'TH' : 'θ',
-			'M' : 'm',
-			'R' : 'ɹ',
-			'K' : 'k',
-			'EH' : 'ɛ',
-			'EY' : 'eɪ',
-			'NG' : 'ŋ',
-			'ZH' : 'ʒ',
-			'HH' : 'h',
-			'SH' : 'ʃ',
-			'OY' : 'ɔɪ',
-			'S' : 's',
-			'AO' : 'ɔ',
-			'F' : 'f',
-			'W' : 'w',
-			'IH' : 'ɪ',
-			'DH' : 'ð',
-			'L' : 'l',
-			'N' : 'n',
-			'CH' : 'tʃ',
-			'AA' : 'ɑ',
-			'B' : 'b',
-			'OW' : 'oʊ',
-			'UW' : 'u',
-			'AW' : 'aʊ',
-			'ER' : 'ɹ̩'}
-    cmu_ipa = []
-    for word, pron in cmu:
-        ipa = []
-        for seg in pron:
-            ipa.append(arpa_dict[re.sub(r"\d","",seg)])
-        cmu_ipa.append((word, ipa))
-    return cmu_ipa
-
-def parse_answer(user):
-    result = re.findall(r"(aɪ|dʒ|eɪ|ɔɪ|tʃ|oʊ|aʊ|ɹ̩|\w)",user)
-    return result
-
-def make_game_dict(game_list):
-    '''
-    Structure of game_dict:
-
-    key: tuple of sorted, unique IPA characters
-    value: list of tuple pairs,
-    where each pair is (string of the orthographic word, list of the IPA characters)
-    '''
-    game_dict = defaultdict(list)
-    for word, pron in game_list:
-        k = tuple(sorted(set(pron)))
-        game_dict[k].append((tuple(pron),word))
-    return game_dict
-
-def isolate_segments(game_list):
-    '''
-    gets individual segments from word list
-    OBSOLETE??
-    '''
-    segments = [seg for word, pron in game_list for seg in pron]
-    segments = list(set(segments))
-    return segments
-
-def generate_phones(segments):
-    '''
-    picks 7 random phones, with one of these marked as the center phone
-    OBSOLETE
-    '''
-    phones = random.sample(segments, 7)
-    center = random.choice(phones)
-    return (phones, center)
-
-def phone_combos(phones, center):
-    '''
-    find all combinations of phones of min length 4 that contain the center phone
-    '''
-    combos = []
-    for i in range(4,len(phones)+1):
-        for n in itertools.combinations(phones,i):
-            if center in n:
-                combos.append(tuple(sorted(n)))
-    return combos
-
-def make_puzzle():
-    '''
-    makes a puzzle based on a starting panphone
-    '''
-    possible_panphones = [pron for pron in game_dict.keys() if len(pron) == 7]
-    key_panphone = random.choice(possible_panphones)
-    center = random.choice(key_panphone)
-    phones = list(key_panphone)
-    combos = phone_combos(phones, center)
-    answers = dict()
-    for combo in combos:
-        if combo in game_dict:
-            answers[combo] = game_dict[combo]
-    pron_key = defaultdict(list)
-    answer_pairs = [pair for answer in answers.values() for pair in answer]
-    for pron, word in answer_pairs:
-        pron_key[tuple(pron)].append(word)
-    return answers, pron_key, center, phones
-
-
-def initialize_data():
-    '''
-    define wordlist, make game dict
-    '''
-    cmu = nltk.corpus.cmudict.entries()
-    global game_list, segments, game_dict
-    game_list = to_ipa(cmu)
-    segments = isolate_segments(game_list)
-    game_dict = make_game_dict(game_list)
-
 def load_game_dict():
-    global game_dict
     with open("game-dict.json","r") as f:
         raw_dict = json.load(f)
     game_dict = {literal_eval(k):v for k, v in raw_dict.items()}
     return game_dict
 
-def print_phones(center, phones):
-    others = [phone for phone in phones if phone != center]
-    print(f"\t\t{others[0]}")
-    print(f"\t{others[1]}\t\t{others[2]}")
-    print(f"\t\t{center}")
-    print(f"\t{others[3]}\t\t{others[4]}")
-    print(f"\t\t{others[5]}")
+def parse_answer(user):
+    result = re.findall(r"(aɪ|dʒ|eɪ|ɔɪ|tʃ|oʊ|aʊ|ɹ̩|\w)",user)
+    return tuple(result)
 
-def print_phones_rainbow(center, phones):
-    others = [phone for phone in phones if phone != center]
-    print(f"\t\t{others[0]}\t{others[1]}")
-    print(f"\t{others[2]}\t\t\t{others[3]}")
-    print(f"{others[4]}\t\t    {center}\t\t\t{others[5]}")
+class Puzzle:
+    def __init__(self, game_dict):
+        self.phones = tuple()
+        self.center = ''
+        self.total_points = 0
+        self.answer_dict = defaultdict(list)
+        self.game_dict = game_dict
+    
+    def build_chart(self):
+        '''
+        picks a random length-7 key from the game dict, and sets a random phone
+        from this key as the center letter
+        also generates all possible combos of these phones that include center letter
+        '''
+        possible_phones = [pron for pron in self.game_dict.keys() if len(pron) == 7]
+        self.phones = random.choice(possible_phones)
+        self.center = random.choice(self.phones)
+        
+        
+    def build_answers(self):
+        combos = []
+        # find all combinations of phones of min length 4 that contain the center phone
+        for i in range(4,len(self.phones)+1):
+            for n in itertools.combinations(self.phones,i):
+                if self.center in n:
+                    combos.append(tuple(sorted(n)))
+        subset_dict = {k: self.game_dict[k] for k in combos if k in self.game_dict}
+        answer_pairs = [pair for answer in subset_dict.values() for pair in answer]
+        for pron, word in answer_pairs:
+            self.answer_dict[tuple(pron)].append(word)
+    
+    def set_puzzle(self, min=1):
+        '''
+        sets a puzzle, with an optional minimum total point value
+        '''
+        while self.total_points < min:
+            self.build_chart()
+            self.build_answers()
+            self.count_points()
 
-def answer_points(guess_key, verbose=True):
-    if len(guess_key) == 4:
-        points = 1
-    else:
-        points = len(guess_key)
-    if len(set(guess_key)) == 7:
+    def answer_points(self, answer_tuple, verbose=True):
+        message = ''
+        if len(answer_tuple) == 4:
+            points = 1
+            message += f"{points} point: "
+        elif len(set(answer_tuple)) == 7:
+            points = len(answer_tuple) + 7
+            message += f"Panphone! {points} points: "
+        else:
+            points = len(answer_tuple)
+            message += f"Nice! {points} points: "
         if verbose:
-            print("Panphone!")
-        points += 7
-    return points
+            message += ', '.join(self.answer_dict[answer_tuple])
+            print(message)
+        return points
 
-def puzzle_points(pron_key):
-    total = 0
-    for ans in pron_key.keys():
-        total += answer_points(ans,verbose=False)
-    return total
+    def count_points(self):
+        for ans in self.answer_dict.keys():
+            self.total_points += self.answer_points(ans,verbose=False)
 
+    def print_chart(self):
+        others = [phone for phone in self.phones if phone != self.center]
+        print(f"\t\t{others[0]}")
+        print(f"\t{others[1]}\t\t{others[2]}")
+        print(f"\t\t{self.center}")
+        print(f"\t{others[3]}\t\t{others[4]}")
+        print(f"\t\t{others[5]}")
 
-def play_puzzle():
+def play_puzzle(game_dict):
     score = 0
-    answers, pron_key, center, phones = make_puzzle()
-    print_phones(center, phones)
-    total = puzzle_points(pron_key)
-    guess = input("Guess: ")
-    while guess != "quit":
-        guess_key = tuple(parse_answer(guess))
-        if guess == "show answers":
-            print(pron_key)
-        elif len(guess_key) < 4:
+    puz = Puzzle(game_dict)
+    puz.set_puzzle(50)
+    puz.print_chart()
+    raw_guess = input("Guess: ")
+    while raw_guess != "quit":
+        guess = parse_answer(raw_guess)
+        if raw_guess == "show answers":
+            print(puz.answer_dict)
+        elif len(guess) < 4:
             print("too short")
-        elif center not in guess_key:
+        elif puz.center not in guess:
             print("missing center phone")
-        elif guess_key in pron_key.keys():
-            points = answer_points(guess_key)
-            pts = "point" if points == 1 else "points"
-            print(f"{', '.join(pron_key[guess_key])}, {points} {pts}.")
+        elif guess in puz.answer_dict.keys():
+            points = puz.answer_points(guess)
             score += points
         else:
             print("not in word list")
-        if score == total:
+        if score == puz.total_points:
             scr = "point" if score == 1 else "points"
-            print(f"You got {score} {scr} out of {total}.")
+            print(f"You got {score} {scr} out of {puz.total_points}.")
             user = input("You win! Play again? (y/n)")
             if user == 'y':
-                play_puzzle()
+                play_puzzle(game_dict)
                 return
             else:
                 return
-        print_phones(center, phones)
-        guess = input(f"Score: {score} of {total}\nGuess: ")
+        puz.print_chart()
+        raw_guess = input(f"Score: {score} of {puz.total_points}\nGuess: ")
     scr = "point" if score == 1 else "points"
-    print(f"You got {score} {scr} out of {total}.")
-
-
+    print(f"You got {score} {scr} out of {puz.total_points}.")
 
 def main():
     game_dict = load_game_dict()
-    play_puzzle()
+    play_puzzle(game_dict)
 
 if __name__ == '__main__':
     main()

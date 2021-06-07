@@ -3,8 +3,6 @@ from nltk.corpus import brown
 from collections import Counter
 from random import sample
 
-from game import *
-
 '''
 run this script to modify the wordlist for the game
 currently it takes the num_words most common words from the Brown corpus
@@ -21,6 +19,73 @@ game_word = re.compile(r"^[A-Za-z]+$")
 # the following parts of speech will not be included
 # run nltk.help.upenn_tagset() for definitions
 banned_pos = ["NNP","NNPS","SYM","LS","FW"]
+
+
+def to_ipa(cmu):
+    '''
+    convert CMU ARPABET to IPA
+    used in generate_dict.py
+    '''
+    arpa_dict = {'AY' : 'aɪ',
+			'D' : 'd',
+			'IY' : 'i',
+			'V' : 'v',
+			'AE' : 'æ',
+			'JH' : 'dʒ',
+			'UH' : 'ʊ',
+			'T' : 't',
+			'Y' : 'j',
+			'AH' : 'ʌ',
+			'G' : 'g',
+			'Z' : 'z',
+			'P' : 'p',
+			'TH' : 'θ',
+			'M' : 'm',
+			'R' : 'ɹ',
+			'K' : 'k',
+			'EH' : 'ɛ',
+			'EY' : 'eɪ',
+			'NG' : 'ŋ',
+			'ZH' : 'ʒ',
+			'HH' : 'h',
+			'SH' : 'ʃ',
+			'OY' : 'ɔɪ',
+			'S' : 's',
+			'AO' : 'ɔ',
+			'F' : 'f',
+			'W' : 'w',
+			'IH' : 'ɪ',
+			'DH' : 'ð',
+			'L' : 'l',
+			'N' : 'n',
+			'CH' : 'tʃ',
+			'AA' : 'ɑ',
+			'B' : 'b',
+			'OW' : 'oʊ',
+			'UW' : 'u',
+			'AW' : 'aʊ',
+			'ER' : 'ɹ̩'}
+    cmu_ipa = []
+    for word, pron in cmu:
+        ipa = []
+        for seg in pron:
+            ipa.append(arpa_dict[re.sub(r"\d","",seg)])
+        cmu_ipa.append((word, ipa))
+    return cmu_ipa
+
+def make_game_dict(game_list):
+    '''
+    Used in generate_dict.py. Structure of game_dict:
+
+    key: tuple of sorted, unique IPA characters
+    value: list of tuple pairs,
+    where each pair is (string of the orthographic word, list of the IPA characters)
+    '''
+    game_dict = defaultdict(list)
+    for word, pron in game_list:
+        k = tuple(sorted(set(pron)))
+        game_dict[k].append((tuple(pron),word))
+    return game_dict
 
 # load a whole lotta words from Brown
 raw_brown = brown.words()
