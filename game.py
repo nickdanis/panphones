@@ -22,6 +22,7 @@ class Puzzle:
         self.phones = tuple()
         self.center = ''
         self.total_points = 0
+        self.player_score = 0
         self.answer_dict = defaultdict(list)
         self.game_dict = game_dict
     
@@ -86,7 +87,6 @@ class Puzzle:
         print(f"\t\t{others[5]}")
 
 def play_puzzle(game_dict):
-    score = 0
     puz = Puzzle(game_dict)
     puz.set_puzzle(50)
     puz.print_chart()
@@ -101,12 +101,12 @@ def play_puzzle(game_dict):
             print("missing center phone")
         elif guess in puz.answer_dict.keys():
             points = puz.answer_points(guess)
-            score += points
+            puz.player_score += points
         else:
             print("not in word list")
-        if score == puz.total_points:
-            scr = "point" if score == 1 else "points"
-            print(f"You got {score} {scr} out of {puz.total_points}.")
+        if puz.player_score == puz.total_points:
+            scr = "point" if puz.player_score == 1 else "points"
+            print(f"You got {puz.player_score} {scr} out of {puz.total_points}.")
             user = input("You win! Play again? (y/n)")
             if user == 'y':
                 play_puzzle(game_dict)
@@ -114,9 +114,9 @@ def play_puzzle(game_dict):
             else:
                 return
         puz.print_chart()
-        raw_guess = input(f"Score: {score} of {puz.total_points}\nGuess: ")
-    scr = "point" if score == 1 else "points"
-    print(f"You got {score} {scr} out of {puz.total_points}.")
+        raw_guess = input(f"Score: {puz.player_score} of {puz.total_points}\nGuess: ")
+    scr = "point" if puz.player_score == 1 else "points"
+    print(f"You got {puz.player_score} {scr} out of {puz.total_points}.")
 
 def main():
     game_dict = load_game_dict()
