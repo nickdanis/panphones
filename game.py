@@ -1,11 +1,5 @@
-import nltk
+import itertools, random, re, json
 from collections import defaultdict
-import itertools
-import random
-import re
-import numpy as np
-
-import json
 from ast import literal_eval
 
 def load_game_dict():
@@ -19,6 +13,9 @@ def parse_answer(user):
     return tuple(result)
 
 class Puzzle:
+    puzzle_levels = ['Underspecified', 'Minimal', 'Weak Position', 'Lenited', 'Reduced', 'Strong Position', 'Saturated', 'Hardened', 'Optimal']
+    instructions = "Welcome to Panphones! Inspired by the NY Times Spelling Bee game. Find as many English words as you can using the symbols shown. Words must be at least four phones long and they must use the center phone, though you can repeat symbols. Pronunciations are based on the Carnegie Mellon Pronouncing Dictionary. You can either type the IPA symbols as you see them, or enter a string of the corresponding digits (no spaces in either case). Note that the puzzle contains both r and syllabic r! Type 'shuffle' to shuffle the chart. Type 'quit' at any time to quit."
+
     def __init__(self, game_dict):
         self.phones = tuple()
         self.center = ''
@@ -26,13 +23,11 @@ class Puzzle:
         self.top_score = 0
         self.player_score = 0
         self.chart_layout = []
-        self.puzzle_levels = ['Underspecified', 'Minimal', 'Weak Position', 'Lenited', 'Reduced', 'Strong Position', 'Saturated', 'Hardened', 'Optimal']
         self.player_level = self.puzzle_levels[0]
         self.puzzle_ranges = dict()
         self.answer_dict = defaultdict(list)
         self.game_dict = game_dict
         self.found = []
-        self.instructions = "Welcome to Panphones! Inspired by the NY Times Spelling Bee game. Find as many English words as you can using the symbols shown. Words must be at least four phones long and they must use the center phone, though you can repeat symbols. Pronunciations are based on the Carnegie Mellon Pronouncing Dictionary. You can either type the IPA symbols as you see them, or enter a string of the corresponding digits (no spaces in either case). Note that the puzzle contains both r and syllabic r! Type 'shuffle' to shuffle the chart. Type 'quit' at any time to quit."
     
     def build_chart(self):
         '''
@@ -47,6 +42,8 @@ class Puzzle:
         
         
     def build_answers(self):
+        '''based on the chosen phones, finds all possible words that can be legally built
+        assigns these to answer_dict'''
         combos = []
         # find all combinations of phones of min length 4 that contain the center phone
         for i in range(4,len(self.phones)+1):
@@ -68,6 +65,8 @@ class Puzzle:
         self.get_level()
 
     def answer_points(self, answer_tuple, verbose=True):
+        '''takes an answer and returns the number of points
+        optionally, prints a message'''
         message = ''
         if len(answer_tuple) == 4:
             points = 1
@@ -84,10 +83,12 @@ class Puzzle:
         return points
 
     def count_points(self):
+        '''counts the total point vowel for the puzzle'''
         for ans in self.answer_dict.keys():
             self.total_points += self.answer_points(ans,verbose=False)
 
     def print_chart(self,shuffle=False):
+        '''prints the game chart'''
         if shuffle:
             random.shuffle(self.chart_layout)
         sym = lambda x: f"{self.chart_layout[x]}({self.phones.index(self.chart_layout[x])})"
@@ -98,6 +99,7 @@ class Puzzle:
         print(f"\t\t{sym(5)}")
 
     def get_level(self):
+        '''assigns the levels based on the total points'''
         self.top_score = int(self.total_points - self.total_points * .1)
         diff = int(self.top_score / (len(self.puzzle_levels)-1))
         level_ranges = {1 : self.puzzle_levels[1], self.top_score : self.puzzle_levels[-1]}
@@ -111,6 +113,7 @@ class Puzzle:
         self.puzzle_ranges = level_ranges
 
     def score_bar(self):
+        '''generates and prints the score bar'''
         self.get_level()
         padding = len(max(self.puzzle_levels,key=len)) + 1
         length = 30
@@ -127,12 +130,12 @@ def play_puzzle(game_dict):
     while puz.total_points < 60:
         puz = Puzzle(game_dict)
         puz.set_puzzle()
-    print(puz.instructions)
-    for pts, lvl in sorted(puz.puzzle_ranges.items()):
-        print(f"{pts}:\t{lvl}")
-    shuffle=False
+    print(f"\n{puz.instructions}\n")
     puz.score_bar()
+    print("\n")
     puz.print_chart()
+    print("\n")
+    shuffle=False
     raw_guess = input("Guess: ")
     while raw_guess != "quit":
         if re.match(r"\d+",raw_guess):
@@ -150,6 +153,8 @@ def play_puzzle(game_dict):
             puz.player_score += 10
         elif raw_guess == "shuffle":
             shuffle = True
+        elif raw_guess == "levels":
+            print(", ".join([f"{lvl} ({pts})" for pts, lvl in sorted(puz.puzzle_ranges.items())]))
         elif len(guess) < 4:
             print("Too short")
         elif puz.center not in guess:
@@ -180,7 +185,6 @@ def play_puzzle(game_dict):
             else:
                 return
         puz.score_bar()
-        print(shuffle)
         puz.print_chart(shuffle=shuffle)
         shuffle=False
         raw_guess = input(f"Guess: ")

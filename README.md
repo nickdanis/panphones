@@ -27,4 +27,4 @@ The script converts this list to a dictionary tailored to the game, and exports 
 
 The game is currently a text-only command-line game. To start, run `python game.py`. A random puzzle is generated on every start. You can enter guesses either as IPA symbols (having an IPA keyboard helps), or as digits corresponding to the symbols on the chart. If you enter a guess in numbers, the string in IPA will be shown for confirmation. 
 
-![example screenshot](screenshot.png)
+For debugging and testing purposes. you can also type `show answers` to see how the current puzzle is constructed. 
