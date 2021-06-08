@@ -122,9 +122,9 @@ print(f"Done tagging...")
 filtered_tagged = [(word.lower(), pos) for word, pos in tagged_brown if pos not in banned_pos and game_word.match(word)]
 
 # for inspection
-with open('taggedlist.txt','w',encoding='utf-8') as f:
-    for word in filtered_tagged:
-        f.write(f"{word}\n")
+# with open('taggedlist.txt','w',encoding='utf-8') as f:
+#     for word in filtered_tagged:
+#         f.write(f"{word}\n")
 
 filtered_brown = [word for word, pos in filtered_tagged]
 
