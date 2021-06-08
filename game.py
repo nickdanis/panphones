@@ -4,7 +4,7 @@ from ast import literal_eval
 
 class Puzzle:
     puzzle_levels = ['Underspecified', 'Minimal', 'Weak Position', 'Lenited', 'Reduced', 'Strong Position', 'Saturated', 'Hardened', 'Optimal']
-    instructions = "Welcome to Panphones! Inspired by the NY Times Spelling Bee game. Find as many English words as you can using the symbols shown. Words must be at least four phones long and they must use the center phone, though you can repeat symbols. Pronunciations are based on the Carnegie Mellon Pronouncing Dictionary. You can either type in IPA (if so equipped) or enter the corresponding digit. These methods can be combined in your guess as well. Note that the puzzle contains both r and syllabic r! Type 'shuffle' to shuffle the chart, 'n' for a new puzzle, and 'quit' at any time to quit."
+    instructions = "Welcome to Panphones! [...]"
 
     def __init__(self, raw_game_dict="game-dict.json"):
         self.phones = tuple() # all 7 phones of the game
