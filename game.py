@@ -3,6 +3,7 @@ from collections import defaultdict
 import itertools
 import random
 import re
+import numpy as np
 
 import json
 from ast import literal_eval
@@ -22,9 +23,15 @@ class Puzzle:
         self.phones = tuple()
         self.center = ''
         self.total_points = 0
+        self.top_score = 0
         self.player_score = 0
+        self.puzzle_levels = ['Underspecified','Minimal', 'Elided', 'Reduced', 'Saturated', 'Optimal']
+        self.player_level = self.puzzle_levels[0]
+        self.puzzle_ranges = dict()
         self.answer_dict = defaultdict(list)
         self.game_dict = game_dict
+        self.found = []
+        self.number_mode = False
     
     def build_chart(self):
         '''
@@ -49,14 +56,18 @@ class Puzzle:
         for pron, word in answer_pairs:
             self.answer_dict[tuple(pron)].append(word)
     
-    def set_puzzle(self, min=1):
+    def set_puzzle(self, num=None):
         '''
         sets a puzzle, with an optional minimum total point value
         '''
-        while self.total_points < min:
-            self.build_chart()
-            self.build_answers()
-            self.count_points()
+        if num == None:
+            num = 1
+        self.build_chart()
+        self.build_answers()
+        self.count_points()
+        self.get_level()
+        if self.total_points < num:
+            self.set_puzzle(num)
 
     def answer_points(self, answer_tuple, verbose=True):
         message = ''
@@ -86,37 +97,77 @@ class Puzzle:
         print(f"\t{others[3]}\t\t{others[4]}")
         print(f"\t\t{others[5]}")
 
+    def get_level(self):
+        self.top_score = int(self.total_points - self.total_points * .1)
+        diff = int(self.top_score / (len(self.puzzle_levels)-1))
+        level_ranges = {1 : self.puzzle_levels[1], self.top_score : self.puzzle_levels[-1]}
+        for lvl in self.puzzle_levels[2:-1]:
+            range = self.puzzle_levels.index(lvl) * diff
+            level_ranges[range] = lvl
+        for pts, lvl in sorted(level_ranges.items(), reverse=True):
+            if self.player_score >= pts:
+                self.player_level = lvl
+                break
+        self.puzzle_ranges = level_ranges
+
+    def score_bar(self):
+        self.get_level()
+        padding = len(max(self.puzzle_levels,key=len)) + 1
+        length = 30
+        progress = int((self.player_score / self.top_score) * length)
+        bar = ("=" * (progress - len(str(self.player_score)))) + str(self.player_score) + '-' * (length - progress)
+        bar = f"{bar}"
+        #print(f"{self.player_score} of {self.top_score} points.")
+        print(f"{self.player_level:{padding}} {bar}")
+
+
 def play_puzzle(game_dict):
     puz = Puzzle(game_dict)
     puz.set_puzzle(50)
+    for pts, lvl in sorted(puz.puzzle_ranges.items()):
+        print(f"{pts}:\t{lvl}")
+    puz.score_bar()
     puz.print_chart()
     raw_guess = input("Guess: ")
     while raw_guess != "quit":
         guess = parse_answer(raw_guess)
         if raw_guess == "show answers":
-            print(puz.answer_dict)
+            for key, value in puz.answer_dict.items():
+                print(f"{''.join(key)}\t{', '.join(value)}")
+        elif raw_guess == "cheat":
+            puz.player_score += 5
         elif len(guess) < 4:
-            print("too short")
+            print("Too short")
         elif puz.center not in guess:
-            print("missing center phone")
+            print("Missing center phone")
+        elif guess in puz.found:
+            print("Already found")
         elif guess in puz.answer_dict.keys():
             points = puz.answer_points(guess)
             puz.player_score += points
+            puz.found.append(guess)
         else:
-            print("not in word list")
-        if puz.player_score == puz.total_points:
-            scr = "point" if puz.player_score == 1 else "points"
-            print(f"You got {puz.player_score} {scr} out of {puz.total_points}.")
-            user = input("You win! Play again? (y/n)")
-            if user == 'y':
+            print("Not in word list")
+        if puz.player_score >= puz.top_score and puz.player_level != puz.puzzle_levels[-1]:
+            puz.score_bar()
+            print("You have reached the highest level!")
+            user = input("(k)eep playing, (n)ew game, (q)uit\n")
+            if user == 'n':
+                play_puzzle(game_dict)
+                return
+            elif user == 'q':
+                return
+        if puz.player_score >= puz.total_points:
+            print("You got all the words! You are hereby coronalized.")
+            user = input("(n)ew game, (q)uit\n")
+            if user == 'n':
                 play_puzzle(game_dict)
                 return
             else:
                 return
+        puz.score_bar()
         puz.print_chart()
-        raw_guess = input(f"Score: {puz.player_score} of {puz.total_points}\nGuess: ")
-    scr = "point" if puz.player_score == 1 else "points"
-    print(f"You got {puz.player_score} {scr} out of {puz.total_points}.")
+        raw_guess = input(f"Guess: ")
 
 def main():
     game_dict = load_game_dict()
