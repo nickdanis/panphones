@@ -181,7 +181,7 @@ def play_puzzle():
     while puz.total_points < 60:
         puz = TextPlay()
         puz.set_puzzle()
-    print("\n",puz.instructions)
+    print("\n",puz.instructions,"\n")
     puz.score_bar()
     puz.print_chart()
     shuffle=False
