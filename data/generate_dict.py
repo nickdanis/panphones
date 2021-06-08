@@ -1,6 +1,6 @@
-import nltk, re, json
+import nltk, re, json, random, string
 from nltk.corpus import brown
-from collections import Counter
+from collections import Counter, defaultdict
 from random import sample
 
 '''
@@ -20,6 +20,29 @@ game_word = re.compile(r"^[A-Za-z]+$")
 # run nltk.help.upenn_tagset() for definitions
 banned_pos = ["NNP","NNPS","SYM","LS","FW"]
 
+## bad word filtering functions
+# make a cipher with random seed 42
+random.seed(42)
+cipher = list(string.ascii_lowercase)
+random.shuffle(cipher)
+
+# make encoding and decoding dictionaries and function
+alpha = list(string.ascii_lowercase)
+
+encode = dict()
+for code, letter in zip(cipher, alpha):
+    encode[letter] = code
+
+decode = dict()
+for code, letter in zip(cipher, alpha):
+    decode[code] = letter
+
+def code_word(code_dic, word):
+    result = ''
+    for s in word:
+        result += code_dic[s]
+    return result
+## end bad word filtering functions
 
 def to_ipa(cmu):
     '''
@@ -108,9 +131,14 @@ filtered_brown = [word for word, pos in filtered_tagged]
 # get the most common num_words for the game
 master_list_b = [word for word, i in Counter(filtered_brown).most_common(num_words)]
 
-unc_list = []
+# filtering out bad words
 
-master_list = [word for word in master_list_b if word not in unc_list]
+with open('badwords.txt','r',encoding='utf-8') as f:
+    bad_coded = f.readlines()
+
+bad = [code_word(decode, word.strip()) for word in bad_coded]
+
+master_list = [word for word in master_list_b if word not in bad]
 
 print(f"Unique words extracted: {len(master_list)}")
 
