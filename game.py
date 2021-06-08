@@ -4,7 +4,7 @@ from ast import literal_eval
 
 class Puzzle:
     puzzle_levels = ['Underspecified', 'Minimal', 'Weak Position', 'Lenited', 'Reduced', 'Strong Position', 'Saturated', 'Hardened', 'Optimal']
-    instructions = "Welcome to Panphones! Inspired by the NY Times Spelling Bee game. Find as many English words as you can using the symbols shown. Words must be at least four phones long and they must use the center phone, though you can repeat symbols. Pronunciations are based on the Carnegie Mellon Pronouncing Dictionary. You can either type the IPA symbols as you see them, or enter a string of the corresponding digits (no spaces in either case). Note that the puzzle contains both r and syllabic r! Type 'shuffle' to shuffle the chart, 'n' for a new puzzle, and 'quit' at any time to quit."
+    instructions = "Welcome to Panphones! Inspired by the NY Times Spelling Bee game. Find as many English words as you can using the symbols shown. Words must be at least four phones long and they must use the center phone, though you can repeat symbols. Pronunciations are based on the Carnegie Mellon Pronouncing Dictionary. You can either type in IPA (if so equipped) or enter the corresponding digit. These methods can be combined in your guess as well. Note that the puzzle contains both r and syllabic r! Type 'shuffle' to shuffle the chart, 'n' for a new puzzle, and 'quit' at any time to quit."
 
     def __init__(self, raw_game_dict="game-dict.json"):
         self.phones = tuple() # all 7 phones of the game
@@ -135,15 +135,20 @@ class TextPlay(Puzzle):
         return tuple(guess)
 
     def parse_digits(self, raw_guess, verbose=True):
-        '''converts digits to IPA symbols based on index'''
+        '''converts digits to IPA symbols based on index
+        accepts mixed digits and IPAǃ'''
         guess = []
         for n in list(raw_guess):
-            guess.append(self.phones[int(n)])
+            if re.search(r'\d',n):
+                guess.append(self.phones[int(n)])
+            else:
+                guess.append(n)
         if verbose:
             print(f"IPA: [{''.join(guess)}]")
         return tuple(guess)
 
     def print_levels(self):
+        '''print the puzzle levels as a fancy list'''
         formatted_levels = [f"{lvl} ({pts})" for pts, lvl in sorted(self.puzzle_ranges.items())]
         print(", ".join(formatted_levels))
 
@@ -182,7 +187,7 @@ def play_puzzle():
     shuffle=False
     raw_guess = input("Guess: ")
     while raw_guess != "quit":
-        if re.match(r"\d+",raw_guess):
+        if re.search(r"\d+",raw_guess):
             try:
                 guess = puz.parse_digits(raw_guess)
             except:
@@ -222,7 +227,6 @@ def play_puzzle():
         raw_guess = input(f"Guess: ")
 
 def main():
-    
     play_puzzle()
 
 if __name__ == '__main__':
