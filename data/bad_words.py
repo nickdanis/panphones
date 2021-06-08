@@ -1,6 +1,6 @@
 import string, random
 
-# make a cipher with random seed 42
+# make a substitution cipher with random seed 42
 random.seed(42)
 cipher = list(string.ascii_lowercase)
 random.shuffle(cipher)
