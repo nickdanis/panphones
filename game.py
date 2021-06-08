@@ -9,7 +9,7 @@ import json
 from ast import literal_eval
 
 def load_game_dict():
-    with open("game-dict.json","r") as f:
+    with open("data/game-dict.json","r") as f:
         raw_dict = json.load(f)
     game_dict = {literal_eval(k):v for k, v in raw_dict.items()}
     return game_dict
@@ -31,7 +31,7 @@ class Puzzle:
         self.answer_dict = defaultdict(list)
         self.game_dict = game_dict
         self.found = []
-        self.number_mode = False
+        self.instructions = "Welcome to Panphones! Inspired by the NY Times Spelling Bee game. Find as many English words as you can using the symbols shown. Words must be at least four phones long and they must use the center phone, though you can repeat symbols. Pronunciations are based on the Carnegie Mellon Pronouncing Dictionary. You can either type the IPA symbols as you see them, or enter a string of the corresponding digits (no spaces in either case). Note that the puzzle contains both r and syllabic r! Type 'shuffle' to shuffle the chart. Type 'quit' at any time to quit."
     
     def build_chart(self):
         '''
@@ -60,14 +60,10 @@ class Puzzle:
         '''
         sets a puzzle, with an optional minimum total point value
         '''
-        if num == None:
-            num = 1
         self.build_chart()
         self.build_answers()
         self.count_points()
         self.get_level()
-        if self.total_points < num:
-            self.set_puzzle(num)
 
     def answer_points(self, answer_tuple, verbose=True):
         message = ''
@@ -89,13 +85,16 @@ class Puzzle:
         for ans in self.answer_dict.keys():
             self.total_points += self.answer_points(ans,verbose=False)
 
-    def print_chart(self):
+    def print_chart(self,shuffle=False):
         others = [phone for phone in self.phones if phone != self.center]
-        print(f"\t\t{others[0]}")
-        print(f"\t{others[1]}\t\t{others[2]}")
-        print(f"\t\t{self.center}")
-        print(f"\t{others[3]}\t\t{others[4]}")
-        print(f"\t\t{others[5]}")
+        if shuffle:
+            random.shuffle(others)
+        sym = lambda x: f"{others[x]}({self.phones.index(others[x])})"
+        print(f"\t\t{sym(0)}")
+        print(f"\t{sym(1)}\t\t{sym(2)}")
+        print(f"\t\t{self.center}({self.phones.index(self.center)})")
+        print(f"\t{sym(3)}\t\t{sym(4)}")
+        print(f"\t\t{sym(5)}")
 
     def get_level(self):
         self.top_score = int(self.total_points - self.total_points * .1)
@@ -123,19 +122,33 @@ class Puzzle:
 
 def play_puzzle(game_dict):
     puz = Puzzle(game_dict)
-    puz.set_puzzle(50)
+    puz.set_puzzle()
+    while puz.total_points < 60:
+        puz = Puzzle(game_dict)
+        puz.set_puzzle()
+    print(puz.instructions)
     for pts, lvl in sorted(puz.puzzle_ranges.items()):
         print(f"{pts}:\t{lvl}")
     puz.score_bar()
     puz.print_chart()
+    shuffle=False
     raw_guess = input("Guess: ")
     while raw_guess != "quit":
-        guess = parse_answer(raw_guess)
+        if re.match(r"\d+",raw_guess):
+            guess = []
+            for n in list(raw_guess):
+                guess.append(puz.phones[int(n)])
+            guess = tuple(guess)
+            print(f"IPA: [{''.join(guess)}]")
+        else:
+            guess = parse_answer(raw_guess)
         if raw_guess == "show answers":
             for key, value in puz.answer_dict.items():
                 print(f"{''.join(key)}\t{', '.join(value)}")
-        elif raw_guess == "cheat":
-            puz.player_score += 5
+        elif raw_guess == "idkfa":
+            puz.player_score += 10
+        elif raw_guess == "shuffle":
+            shuffle = True
         elif len(guess) < 4:
             print("Too short")
         elif puz.center not in guess:
@@ -166,7 +179,7 @@ def play_puzzle(game_dict):
             else:
                 return
         puz.score_bar()
-        puz.print_chart()
+        puz.print_chart(shuffle=shuffle)
         raw_guess = input(f"Guess: ")
 
 def main():
