@@ -123,6 +123,8 @@ class Puzzle:
         #print(f"{self.player_score} of {self.top_score} points.")
         print(f"{self.player_level:{padding}} {bar}")
 
+class TextPlay:
+    pass
 
 def play_puzzle(game_dict):
     puz = Puzzle(game_dict)
