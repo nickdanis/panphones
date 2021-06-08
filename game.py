@@ -25,7 +25,8 @@ class Puzzle:
         self.total_points = 0
         self.top_score = 0
         self.player_score = 0
-        self.puzzle_levels = ['Underspecified','Minimal', 'Elided', 'Reduced', 'Saturated', 'Optimal']
+        self.chart_layout = []
+        self.puzzle_levels = ['Underspecified', 'Minimal', 'Weak Position', 'Lenited', 'Reduced', 'Strong Position', 'Saturated', 'Hardened', 'Optimal']
         self.player_level = self.puzzle_levels[0]
         self.puzzle_ranges = dict()
         self.answer_dict = defaultdict(list)
@@ -42,6 +43,7 @@ class Puzzle:
         possible_phones = [pron for pron in self.game_dict.keys() if len(pron) == 7]
         self.phones = random.choice(possible_phones)
         self.center = random.choice(self.phones)
+        self.chart_layout = [phone for phone in self.phones if phone != self.center]
         
         
     def build_answers(self):
@@ -86,10 +88,9 @@ class Puzzle:
             self.total_points += self.answer_points(ans,verbose=False)
 
     def print_chart(self,shuffle=False):
-        others = [phone for phone in self.phones if phone != self.center]
         if shuffle:
-            random.shuffle(others)
-        sym = lambda x: f"{others[x]}({self.phones.index(others[x])})"
+            random.shuffle(self.chart_layout)
+        sym = lambda x: f"{self.chart_layout[x]}({self.phones.index(self.chart_layout[x])})"
         print(f"\t\t{sym(0)}")
         print(f"\t{sym(1)}\t\t{sym(2)}")
         print(f"\t\t{self.center}({self.phones.index(self.center)})")
@@ -129,9 +130,9 @@ def play_puzzle(game_dict):
     print(puz.instructions)
     for pts, lvl in sorted(puz.puzzle_ranges.items()):
         print(f"{pts}:\t{lvl}")
+    shuffle=False
     puz.score_bar()
     puz.print_chart()
-    shuffle=False
     raw_guess = input("Guess: ")
     while raw_guess != "quit":
         if re.match(r"\d+",raw_guess):
@@ -163,7 +164,7 @@ def play_puzzle(game_dict):
             print("Not in word list")
         if puz.player_score >= puz.top_score and puz.player_level != puz.puzzle_levels[-1]:
             puz.score_bar()
-            print("You have reached the highest level!")
+            print(f"You have reached the highest level: {puz.puzzle_levels[-1]}!")
             user = input("(k)eep playing, (n)ew game, (q)uit\n")
             if user == 'n':
                 play_puzzle(game_dict)
@@ -171,7 +172,7 @@ def play_puzzle(game_dict):
             elif user == 'q':
                 return
         if puz.player_score >= puz.total_points:
-            print("You got all the words! You are hereby coronalized.")
+            print("You found all the words! You are hereby coronalized. \U0001F451\U0001F445")
             user = input("(n)ew game, (q)uit\n")
             if user == 'n':
                 play_puzzle(game_dict)
@@ -179,7 +180,9 @@ def play_puzzle(game_dict):
             else:
                 return
         puz.score_bar()
+        print(shuffle)
         puz.print_chart(shuffle=shuffle)
+        shuffle=False
         raw_guess = input(f"Guess: ")
 
 def main():

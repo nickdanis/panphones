@@ -105,7 +105,7 @@ with open('taggedlist.txt','w',encoding='utf-8') as f:
 
 filtered_brown = [word for word, pos in filtered_tagged]
 
-# get the most common 15,000 for the game
+# get the most common num_words for the game
 master_list = [word for word, i in Counter(filtered_brown).most_common(num_words)]
 
 print(f"Unique words extracted: {len(master_list)}")
