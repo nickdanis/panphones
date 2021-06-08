@@ -13,7 +13,7 @@ The game is currently a text-only command-line game. Download or clone the repos
 
 ```
 a:\panphones> python game.py
-Welcome to Panphones! Inspired by the NY Times Spelling Bee game. Find as many English words as you can using the symbols shown. Words must be at least four phones long and they must use the center phone, though you can repeat symbols. Pronunciations are based on the Carnegie Mellon Pronouncing Dictionary. You can either type in IPA (if so equipped) or enter the corresponding digit. These methods can be combined in your guess as well. Note that the puzzle contains both r and syllabic r! Type 'shuffle' to shuffle the chart, 'n' for a new puzzle, and 'quit' at any time to quit.
+Welcome to Panphones! [...]
 
 Underspecified   0------------------------------
 
