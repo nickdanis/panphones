@@ -55,8 +55,6 @@ The script then converts this list to a dictionary tailored to the structure of 
 
 **NOTE**: I've removed any offensive slurs from the game wordlist (see `data/bad_words.py`) that I found, but I can't guarantee that I got them all. If I've missed any, I apologize and please feel free to let me know. 
 
-dev test
-
 ## Author
 
 [Nick Danis](https://www.nickdanis.com/), [nsdanis@wustl.edu](mailto:nsdanis@wustl.edu)
