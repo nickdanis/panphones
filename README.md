@@ -53,7 +53,7 @@ The wordlist for the game created by the `generate_dict.py` script in the `data/
 
 The script then converts this list to a dictionary tailored to the structure of the game, and exports this as `data/game-dict.json`. This file is imported by the `Puzzle` class when the game is loaded. Changes can be made to the process of curating the wordlist as described above, but **the data must be exported in this format for the game to function**. The nltk module is only required to run this script, not to play the game, and it would also require downloading additional corpora, so it has not been included in `requirements.txt`. 
 
-**NOTE**: I've removed any offensive slurs from the game wordlist (see `data/bad_words.py`) that I found, but I can't guarantee that I got them all. If I've missed any, I apologize and please feel free to let me know. 
+**NOTE**: I've removed any offensive slurs from the game wordlist that I found, but I can't guarantee that I got them all. If I've missed any, I apologize and please feel free to let me know. 
 
 ## Author
 
