@@ -1,8 +1,8 @@
 __pycache__/
 .vscode/
 venv/
+data/badwords.txt
 notes.md
 scrap.py
 test.py
-data/badwords.txt
-
+ 
